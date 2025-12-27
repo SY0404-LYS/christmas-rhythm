@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas English Rhythm Party</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Patrick+Hand&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* 1. 基础设置 */
+        body {
+            background-color: #222;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Noto Sans SC', sans-serif;
+            overflow: hidden;
+        }
+
+        /* 2. 舞台容器 */
+        #stage {
+            width: 1280px;
+            height: 720px;
+            background: white;
+            position: relative;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* 3. 幻灯片样式 */
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: none; /* 默认全部隐藏 */
+            flex-direction: column;
+            padding: 40px 60px;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .slide.active {
+            display: flex; /* 激活时显示 */
+            opacity: 1;
+        }
+
+        /* 4. 通用排版 */
+        h1, h2, h3 { font-family: 'Roboto Slab', serif; }
+        .hand-font { font-family: 'Patrick Hand', cursive; }
+
+        .slide-title {
+            font-size: 42px;
+            color: #1f2937;
+            border-bottom: 4px solid #dc2626;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        /* 5. 导航按钮 */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 9999; /* 确保在最顶层 */
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.95);
+            border: 2px solid #e5e7eb;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.1s;
+        }
+        .nav-btn:hover { background: #fff; transform: scale(1.05); color: #dc2626; }
+        .nav-btn:active { transform: scale(0.95); }
+
+        /* 6. 特殊布局组件 */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            height: 100%;
+            align-items: center;
+        }
+        
+        /* 翻转卡片 */
+        .trivia-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            height: 450px;
+        }
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 100%;
+            cursor: pointer;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-front, .flip-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            background: white;
+        }
+        .flip-back {
+            background-color: #15803d;
+            color: white;
+            transform: rotateY(180deg);
+            border: none;
+        }
+
+        /* 互动实验室 */
+        .lab-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            height: 100%;
+        }
+        .scenario-btn {
+            padding: 15px;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scenario-btn:hover { border-color: #ef4444; background: #fef2f2; }
+        .scenario-btn.active { border-color: #ef4444; background: #fef2f2; box-shadow: 0 0 0 2px #ef4444 inset; }
+
+        .chart-display {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .text-zone {
+            text-align: center;
+            font-family: 'Roboto Slab', serif;
+            font-size: 32px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .text-zone span {
+            margin: 0 8px; /* 增加单词间距 */
+            display: inline-block;
+        }
+        .translation-text {
+            font-size: 20px;
+            color: #6b7280;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: normal;
+            margin-top: 10px;
+        }
+        .canvas-zone {
+            flex-grow: 1;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stage">
+        <!-- 1. Cover -->
+        <div class="slide active" style="background: radial-gradient(circle, #b91c1c 0%, #7f1d1d 100%); color: white; justify-content: center; align-items: center;">
+            <i class="fa-solid fa-sleigh" style="font-size: 100px; margin-bottom: 30px; opacity: 0.9;"></i>
+            <h1 style="font-size: 80px; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.3);">Christmas Rhythm Party</h1>
+            <p style="font-size: 28px; margin-top: 20px; font-weight: 300; letter-spacing: 2px;">Unlock the "Engineering Logic" of English</p>
+            <div style="margin-top: 50px; font-family: 'Patrick Hand'; font-size: 24px; opacity: 0.8;">
+                Press <span style="border: 1px solid white; padding: 2px 8px; border-radius: 4px;">Next</span> to Start
+            </div>
+        </div>
+
+        <!-- 2. Self Introduction -->
+        <div class="slide" style="background-color: #fefce8;">
+            <h2 class="slide-title" style="border-color: #166534; color: #166534;">Meet Your Instructor</h2>
+            <div class="two-col">
+                <div style="padding: 40px; border-right: 4px solid #e5e7eb; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: right;">
+                    <div style="margin-bottom: 40px;">
+                        <i class="fa-solid fa-graduation-cap" style="font-size: 48px; color: #b91c1c;"></i>
+                        <h3 style="font-size: 24px; color: #333; margin: 10px 0 5px;">UMass Dartmouth</h3>
+                        <p style="color: #666; font-size: 18px;">Engineering &<br>Applied Science</p>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-briefcase" style="font-size: 48px; color: #166534;"></i>
+                        <h3 style="font-size: 24px; color: #333; margin: 10px 0 5px;">Associate Professor</h3>
+                        <p style="color: #666; font-size: 18px;">Guizhou Normal University<br>(Mech & Elec Engineering)</p>
+                    </div>
+                </div>
+
+                <div style="padding: 40px;">
+                    <h1 style="font-size: 50px; line-height: 1.2; color: #1f2937; margin-bottom: 30px;">
+                        English is<br>
+                        <span style="color: #b91c1c;">Structured.</span>
+                    </h1>
+                    <p style="font-size: 24px; color: #4b5563; line-height: 1.6;">
+                        "We don't just memorize words.<br>
+                        We build sentences with <strong>Engineering Logic</strong>."
+                    </p>
+                    <div style="margin-top: 40px; display: inline-block; background: #e5e7eb; padding: 10px 20px; border-radius: 50px; font-weight: bold; color: #333;">
+                        <i class="fa-solid fa-wrench"></i> Let's debug your pronunciation!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Christmas Trivia -->
+        <div class="slide">
+            <h2 class="slide-title" style="color: #b91c1c;">Christmas Trivia Challenge</h2>
+            <div class="trivia-grid">
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front">
+                            <span style="font-size: 60px;">🎅🧥</span>
+                            <h3 style="font-size: 22px; margin-top: 20px;">Santa's Original Color?</h3>
+                            <p style="color: #ef4444; margin-top: 10px; font-size: 14px;">(Click to reveal)</p>
+                        </div>
+                        <div class="flip-back">
+                            <h3 style="font-size: 36px; margin-bottom: 10px;">Green!</h3>
+                            <p>The modern <strong>RED</strong> suit was popularized by Coca-Cola ads in the 1930s!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front">
+                            <span style="font-size: 60px;">🦌❓</span>
+                            <h3 style="font-size: 22px; margin-top: 20px;">Rudolph: Male or Female?</h3>
+                            <p style="color: #ef4444; margin-top: 10px; font-size: 14px;">(Click to reveal)</p>
+                        </div>
+                        <div class="flip-back">
+                            <h3 style="font-size: 36px; margin-bottom: 10px;">Female!</h3>
+                            <p>Males shed antlers in winter. Females keep them. Santa's team are girls!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front">
+                            <span style="font-size: 60px;">🍪🥛</span>
+                            <h3 style="font-size: 22px; margin-top: 20px;">American Routine?</h3>
+                            <p style="color: #ef4444; margin-top: 10px; font-size: 14px;">(Click to reveal)</p>
+                        </div>
+                        <div class="flip-back" style="text-align: left; padding: 30px; align-items: flex-start;">
+                            <h3 style="font-size: 24px; margin-bottom: 15px; width:100%; text-align: center;">Timeline</h3>
+                            <ul style="font-size: 15px; line-height: 1.5; list-style: none; padding: 0;">
+                                <li>🌙 <strong>Eve:</strong> Cookies & Milk for Santa.</li>
+                                <li>☀️ <strong>Morning:</strong> Stockings first!</li>
+                                <li>🎁 <strong>Then:</strong> Big gifts under the tree.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. The Concept -->
+        <div class="slide" style="background-color: #f0fdf4;">
+            <h2 class="slide-title">The "Secret Engine" of English</h2>
+            <div class="two-col">
+                <div style="background: white; border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <h3 style="color: #2563eb; font-size: 30px; margin-bottom: 20px;">Chinese = Walking 🚶</h3>
+                    <div style="font-size: 60px; color: #2563eb; margin-bottom: 20px;">● ● ● ●</div>
+                    <p style="font-size: 22px; font-weight: bold; color: #4b5563;">Syllable-Timed</p>
+                    <p style="color: #666; margin-top: 10px;">Steps are equal.<br>"我 想 去 商 店"</p>
+                </div>
+                <div style="background: white; border-radius: 20px; padding: 30px; text-align: center; border: 4px solid #b91c1c; box-shadow: 0 10px 20px rgba(185, 28, 28, 0.1);">
+                    <h3 style="color: #b91c1c; font-size: 30px; margin-bottom: 20px;">English = Dancing 💃</h3>
+                    <div style="font-size: 60px; margin-bottom: 20px; display: flex; justify-content: center; align-items: baseline; gap: 15px;">
+                        <span style="font-size: 35px; color: #9ca3af;">●</span>
+                        <span style="color: #b91c1c; transform: scale(1.4);">●</span>
+                        <span style="font-size: 35px; color: #9ca3af;">●</span>
+                        <span style="color: #b91c1c; transform: scale(1.4);">●</span>
+                    </div>
+                    <p style="font-size: 22px; font-weight: bold; color: #4b5563;">Stress-Timed</p>
+                    <p style="color: #666; margin-top: 10px;">Strong & Weak beats.<br>"i WANT to GO..."</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Module 1: Pronunciation (Vowel Calibration) -->
+        <div class="slide" style="background-color: #ecfdf5;">
+            <h2 class="slide-title" style="color: #047857; border-color: #047857;">Module 1: Vowel Calibration 🎯</h2>
+            <p style="color: #666; font-size: 18px; margin-bottom: 20px;">
+                <strong>Engineering Goal:</strong> Adjust mouth tension for precision. (调节肌肉张力以达到精准发音)
+            </p>
+            <div class="two-col" style="gap: 30px;">
+                <!-- Long Vowel -->
+                <div style="background: white; border: 3px solid #059669; border-radius: 20px; padding: 30px; text-align: center; position: relative; overflow: hidden;">
+                    <div style="background: #059669; color: white; position: absolute; top: 0; left: 0; width: 100%; padding: 5px; font-weight: bold;">High Tension (张力)</div>
+                    <div style="margin-top: 20px; font-size: 80px;">🌲</div>
+                    <h3 style="font-size: 40px; color: #059669; margin: 10px 0;">Green Tree</h3>
+                    <p style="font-size: 24px; font-family: 'Roboto Slab';">/ iː /</p>
+                    <div style="margin-top: 15px; background: #d1fae5; padding: 10px; border-radius: 10px; color: #065f46;">
+                        <i class="fa-solid fa-face-smile"></i> <strong>SMILE!</strong><br>
+                        <span style="font-size: 14px;">拉长嘴角，肌肉紧绷</span>
+                    </div>
+                </div>
+                <!-- Short Vowel -->
+                <div style="background: white; border: 3px solid #6b7280; border-radius: 20px; padding: 30px; text-align: center; position: relative; overflow: hidden;">
+                    <div style="background: #6b7280; color: white; position: absolute; top: 0; left: 0; width: 100%; padding: 5px; font-weight: bold;">Low Tension (放松)</div>
+                    <div style="margin-top: 20px; font-size: 80px;">🎁</div>
+                    <h3 style="font-size: 40px; color: #374151; margin: 10px 0;">Big Gift</h3>
+                    <p style="font-size: 24px; font-family: 'Roboto Slab';">/ ɪ /</p>
+                    <div style="margin-top: 15px; background: #f3f4f6; padding: 10px; border-radius: 10px; color: #374151;">
+                        <i class="fa-solid fa-face-meh"></i> <strong>RELAX!</strong><br>
+                        <span style="font-size: 14px;">腹部用力，嘴巴放松</span>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: center; font-size: 24px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                🗣️ Practice: "The <strong style="color:#059669">Green Tree</strong> has a <strong style="color:#374151">Big Gift</strong>."
+            </div>
+        </div>
+
+        <!-- 6. Challenge 2: Rhythm Lab -->
+        <div class="slide">
+            <h2 class="slide-title">Challenge 2: The Rhythm Lab</h2>
+            <div class="lab-container">
+                <div class="lab-controls" id="controls-1">
+                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">Click to visualize rhythm:</p>
+                    <div class="scenario-btn active" onclick="updateViz('c1', 'minecraft')">
+                        <strong>1. Robot Style</strong><br><span style="font-size:12px; color:#666">Steve. Digs. Blocks.</span>
+                    </div>
+                    <div class="scenario-btn" onclick="updateViz('c1', 'minecraft_prog')">
+                        <strong>2. Real English</strong><br><span style="font-size:12px; color:#666">Steve (is) Digging Blocks.</span>
+                    </div>
+                    <div class="scenario-btn" onclick="updateViz('c1', 'santa')">
+                        <strong>3. Santa Beat</strong><br><span style="font-size:12px; color:#666">San-ta Claus.</span>
+                    </div>
+                    <div class="scenario-btn" onclick="updateViz('c1', 'santa_rap')">
+                        <strong>4. Full Sentence</strong><br><span style="font-size:12px; color:#666">San-ta Claus (is) Com-ing.</span>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div id="text-c1" class="text-zone"></div>
+                    <div class="canvas-zone">
+                        <canvas id="canvas-c1"></canvas>
+                    </div>
+                    <div style="text-align: center; font-size: 14px; color: #888; margin-top: 10px;">
+                        Red = Stressed (Heavy) | Grey = Unstressed (Fast)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Challenge 3: Santa Rap -->
+        <div class="slide" style="background-color: #fef2f2;">
+            <h2 class="slide-title" style="color: #b91c1c;">Challenge 3: The Santa Rap</h2>
+            <div class="lab-container">
+                <div class="lab-controls" id="controls-2">
+                    <p style="color: #b91c1c; margin-bottom: 15px; font-weight: bold;">Teacher Leads:</p>
+                    <div class="scenario-btn active" onclick="updateViz('c2', 'rap1')">
+                        <strong>Line 1</strong><br><span style="font-size:12px;">Santa comes with presents...</span>
+                    </div>
+                    <div class="scenario-btn" onclick="updateViz('c2', 'rap2')">
+                        <strong>Line 2</strong><br><span style="font-size:12px;">He puts them in a sack...</span>
+                    </div>
+                    <div class="scenario-btn" onclick="updateViz('c2', 'rap3')">
+                        <strong>Line 3</strong><br><span style="font-size:12px;">Presents... Ribbons... Sack!</span>
+                    </div>
+                </div>
+                <div class="chart-display" style="border: 2px solid #b91c1c;">
+                    <div id="text-c2" class="text-zone"></div>
+                    <div class="canvas-zone">
+                        <canvas id="canvas-c2"></canvas>
+                    </div>
+                    <div style="background: #15803d; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-top: 15px;">
+                        <span class="hand-font" style="font-size: 24px;">👉 Class: "HO! HO! HO!" (Clap x3) 👏</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Module 3: Method (Efficiency Formula) -->
+        <div class="slide" style="background-color: #fffbeb;">
+            <h2 class="slide-title" style="color: #b45309; border-color: #b45309;">Module 3: The Efficiency Formula ⏱️</h2>
+            <div style="background: #1f2937; color: #f3f4f6; padding: 20px 40px; border-radius: 15px; font-family: 'Courier New', monospace; font-size: 28px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+                It takes <span style="color:#fcd34d">&lt;Person&gt;</span> <span style="color:#60a5fa">&lt;Time&gt;</span> to <span style="color:#34d399">&lt;Action&gt;</span>
+                <div style="font-size: 16px; color: #9ca3af; margin-top: 5px; font-family: 'Noto Sans SC';">花费某人多少时间做某事</div>
+            </div>
+            <div class="trivia-grid">
+                <!-- Example 1 -->
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front" style="border-color: #b45309;">
+                            <span style="font-size: 50px;">🎅 🌍</span>
+                            <h3 style="font-size: 20px; margin-top: 15px;">Santa's Job?</h3>
+                            <p style="color: #b45309; font-size: 14px;">(Click to compute)</p>
+                        </div>
+                        <div class="flip-back" style="background-color: #b45309;">
+                            <p style="font-size: 20px; line-height: 1.5;">
+                                "It takes <strong style="color:#fcd34d">Santa</strong> <br>
+                                <strong style="color:#bfdbfe">one night</strong> <br>
+                                to <strong style="color:#a7f3d0">travel the world</strong>."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Example 2 -->
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front" style="border-color: #b45309;">
+                            <span style="font-size: 50px;">🧝 🎁</span>
+                            <h3 style="font-size: 20px; margin-top: 15px;">Wrapping Gifts?</h3>
+                            <p style="color: #b45309; font-size: 14px;">(Click to compute)</p>
+                        </div>
+                        <div class="flip-back" style="background-color: #b45309;">
+                            <p style="font-size: 20px; line-height: 1.5;">
+                                "It takes <strong style="color:#fcd34d">me</strong> <br>
+                                <strong style="color:#bfdbfe">5 minutes</strong> <br>
+                                to <strong style="color:#a7f3d0">wrap a gift</strong>."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Example 3 -->
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-front" style="border-color: #b45309;">
+                            <span style="font-size: 50px;">🎓 🗣️</span>
+                            <h3 style="font-size: 20px; margin-top: 15px;">Learning English?</h3>
+                            <p style="color: #b45309; font-size: 14px;">(Click to compute)</p>
+                        </div>
+                        <div class="flip-back" style="background-color: #15803d;">
+                            <p style="font-size: 20px; line-height: 1.5;">
+                                "It takes <strong style="color:#fcd34d">us</strong> <br>
+                                <strong style="color:#bfdbfe">30 minutes</strong> <br>
+                                to <strong style="color:#a7f3d0">learn the Rhythm</strong>!"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. CTA -->
+        <div class="slide" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); color: white; justify-content: center; align-items: center; text-align: center;">
+            <h2 style="font-size: 60px; margin-bottom: 30px;">Keep the Rhythm Going!</h2>
+            <p style="font-size: 28px; opacity: 0.9; margin-bottom: 50px;">
+                Join the <strong>Oral English Workshop</strong> to sound like a Pro.
+            </p>
+            <div style="background: white; color: #333; padding: 40px; border-radius: 20px; display: inline-block;">
+                <i class="fa-solid fa-qrcode" style="font-size: 150px; color: #15803d;"></i>
+                <h3 style="margin-top: 20px; font-size: 22px; font-weight: bold; color: #15803d;">Scan for Materials</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation Buttons (Global) -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="moveSlide(-1)"><i class="fa-solid fa-arrow-left"></i> Prev</button>
+        <button class="nav-btn" onclick="moveSlide(1)">Next <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+
+    <!-- JAVASCRIPT Logic -->
+    <script>
+        // Data Configuration
+        const dataMap = {
+            'minecraft': {
+                labels: ["STEVE", "DIGS", "BLOCKS"],
+                data: [10, 10, 10],
+                colors: ['#ef4444', '#ef4444', '#ef4444'],
+                html: '<div><span style="color:#ef4444">STEVE</span> <span style="color:#ef4444">DIGS</span> <span style="color:#ef4444">BLOCKS</span></div><div class="translation-text">Steve 挖 方块</div>'
+            },
+            'minecraft_prog': {
+                labels: ["STEVE", "is", "DIG-ging", "BLOCKS"],
+                data: [10, 3, 10, 10],
+                colors: ['#ef4444', '#9ca3af', '#ef4444', '#ef4444'],
+                html: '<div><span style="color:#ef4444">STEVE</span> <span style="color:#9ca3af; font-size: 0.6em">is</span> <span style="color:#ef4444">DIG-ging</span> <span style="color:#ef4444">BLOCKS</span></div><div class="translation-text">Steve 正在挖方块</div>'
+            },
+            'santa': {
+                labels: ["SAN", "ta", "CLAUS"],
+                data: [10, 3, 10],
+                colors: ['#ef4444', '#9ca3af', '#ef4444'],
+                html: '<div><span style="color:#ef4444">SAN</span> <span style="color:#9ca3af; font-size: 0.6em">ta</span> <span style="color:#ef4444">CLAUS</span></div><div class="translation-text">圣诞老人</div>'
+            },
+            'santa_rap': {
+                labels: ["SAN", "ta", "CLAUS", "is", "COM", "ing"],
+                data: [10, 3, 10, 3, 10, 3],
+                colors: ['#ef4444', '#9ca3af', '#ef4444', '#9ca3af', '#ef4444', '#9ca3af'],
+                html: '<div><span style="color:#ef4444">SAN</span> <span style="color:#9ca3af; font-size: 0.6em">ta</span> <span style="color:#ef4444">CLAUS</span> <span style="color:#9ca3af; font-size: 0.6em">is</span> <span style="color:#ef4444">COM</span><span style="color:#9ca3af; font-size: 0.6em">ing</span></div><div class="translation-text">圣诞老人来了</div>'
+            },
+            'rap1': {
+                labels: ["SAN", "ta", "COMES", "with", "PRE", "sents"],
+                data: [10, 3, 10, 2, 10, 3],
+                colors: ['#ef4444', '#9ca3af', '#ef4444', '#9ca3af', '#ef4444', '#9ca3af'],
+                html: '<div><span style="color:#ef4444">SAN</span><span style="color:#9ca3af; font-size:0.6em">ta</span> <span style="color:#ef4444">COMES</span> <span style="color:#9ca3af; font-size:0.6em">with</span> <span style="color:#ef4444">PRE</span><span style="color:#9ca3af; font-size:0.6em">sents</span></div><div class="translation-text">圣诞老人带着礼物来了</div>'
+            },
+            'rap2': {
+                labels: ["he", "PUTS", "them", "in", "a", "SACK"],
+                data: [2, 10, 2, 2, 2, 10],
+                colors: ['#9ca3af', '#ef4444', '#9ca3af', '#9ca3af', '#9ca3af', '#ef4444'],
+                html: '<div><span style="color:#9ca3af; font-size:0.6em">he</span> <span style="color:#ef4444">PUTS</span> <span style="color:#9ca3af; font-size:0.6em">them in a</span> <span style="color:#ef4444">SACK</span></div><div class="translation-text">他把它们装进袋子里</div>'
+            },
+            'rap3': {
+                labels: ["PRE", "sents", "RIB", "bons", "SACK"],
+                data: [10, 3, 10, 3, 10],
+                colors: ['#ef4444', '#9ca3af', '#ef4444', '#9ca3af', '#ef4444'],
+                html: '<div><span style="color:#ef4444">PRE</span><span style="color:#9ca3af; font-size:0.6em">sents...</span> <span style="color:#ef4444">RIB</span><span style="color:#9ca3af; font-size:0.6em">bons...</span> <span style="color:#ef4444">SACK!</span></div><div class="translation-text">礼物... 丝带... 袋子！</div>'
+            }
+        };
+
+        let charts = {};
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        // --- GLOBAL FUNCTIONS (Attached to Window for Safety) ---
+
+        window.updateViz = function(groupId, key) {
+            const data = dataMap[key];
+            const textEl = document.getElementById(`text-${groupId}`);
+            const canvasId = `canvas-${groupId}`;
+            
+            // Text
+            textEl.innerHTML = data.html;
+
+            // Buttons
+            const container = document.getElementById(canvasId).closest('.lab-container');
+            container.querySelectorAll('.scenario-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.getAttribute('onclick').includes(key)) b.classList.add('active');
+            });
+
+            // Chart
+            const ctx = document.getElementById(canvasId);
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderRadius: 12,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    animation: { duration: 500, easing: 'easeOutQuart' },
+                    scales: {
+                        y: { display: false, max: 12, beginAtZero: true },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#333',
+                                font: {
+                                    size: 24, 
+                                    family: "'Patrick Hand', cursive",
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        window.moveSlide = function(dir) {
+            let newIndex = currentSlideIndex + dir;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= slides.length) newIndex = slides.length - 1;
+            
+            // Hide old
+            slides[currentSlideIndex].classList.remove('active');
+            // Show new
+            currentSlideIndex = newIndex;
+            slides[currentSlideIndex].classList.add('active');
+        };
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Force first slide active
+            slides.forEach(s => s.classList.remove('active'));
+            slides[0].classList.add('active');
+
+            // Init Charts
+            updateViz('c1', 'minecraft');
+            updateViz('c2', 'rap1');
+        });
+
+        // Keyboard Support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') window.moveSlide(-1);
+            if (e.key === 'ArrowRight' || e.key === ' ') window.moveSlide(1);
+        });
+
+    </script>
+</body>
+</html>
